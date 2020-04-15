@@ -536,7 +536,7 @@ else:
     MAC_APP_NAME = 'Spyder-Py2.app'
 
 
-def running_in_mac_app():
+def running_in_mac_app(pyexec=None):
     """
     Check if Spyder is running inside an app on macOS.
 
@@ -545,8 +545,11 @@ def running_in_mac_app():
     python path.
     This is important for example for the single_instance option.
     """
+    if pyexec is None:
+        pyexec = sys.executable
+
     if sys.platform == "darwin":
-        if MAC_APP_NAME not in __file__:
+        if MAC_APP_NAME not in pyexec:
             return False
         return True
     else:
