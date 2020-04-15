@@ -26,6 +26,8 @@ from spyder.config.lsp import PYTHON_CONFIG
 from spyder.config.manager import CONF
 from spyder.api.completion import SpyderCompletionPlugin
 from spyder.utils.misc import check_connection_port, getcwd_or_home
+from spyder.utils.programs import get_python_site_packages
+from spyder.utils.conda import is_conda_env
 from spyder.plugins.completion.languageserver import LSP_LANGUAGES
 from spyder.plugins.completion.languageserver.client import LSPClient
 from spyder.plugins.completion.languageserver.confpage import (
@@ -595,15 +597,22 @@ class LanguageServerPlugin(SpyderCompletionPlugin):
         }
 
         # Jedi configuration
+        extra_paths = self.get_option('spyder_pythonpath', section='main',
+                                      default=[])
         if self.get_option('default', section='main_interpreter'):
             environment = None
         else:
             environment = self.get_option('custom_interpreter',
                                           section='main_interpreter')
+            # jedi can miss the site-package: see
+            # https://github.com/davidhalter/jedi/issues/1540
+            if (not is_conda_env(pyexec=sys.executable)
+                and is_conda_env(pyexec=environment)):
+                extra_paths += get_python_site_packages(environment)
+
         jedi = {
             'environment': environment,
-            'extra_paths': self.get_option('spyder_pythonpath',
-                                           section='main', default=[]),
+            'extra_paths': extra_paths,
         }
         jedi_completion = {
             'enabled': self.get_option('code_completion'),
