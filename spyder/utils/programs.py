@@ -945,7 +945,7 @@ def is_pythonw(filename):
 def check_python_help(filename):
     """Check that the python interpreter can compile and provide the zen."""
     try:
-        proc = run_program(filename, ['-c', 'import this'])
+        proc = run_program(filename, ['-c', 'import this'], env={})
         stdout, _ = proc.communicate()
         stdout = to_text_string(stdout)
         valid_lines = [
