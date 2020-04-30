@@ -859,7 +859,8 @@ class IPythonConsole(SpyderPluginWidget):
                     cmd = cmd.encode('utf-8')
 
                 try:
-                    proc = programs.run_shell_command(cmd)
+                    # use clean environment
+                    proc = programs.run_shell_command(cmd, env={})
                     output, _err = proc.communicate()
                 except subprocess.CalledProcessError:
                     output = ''
