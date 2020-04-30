@@ -18,7 +18,8 @@ import sys
 from jupyter_client.kernelspec import KernelSpec
 
 # Local imports
-from spyder.config.base import DEV, running_under_pytest, SAFE_MODE
+from spyder.config.base import (DEV, running_under_pytest, SAFE_MODE,
+                                running_in_mac_app)
 from spyder.config.manager import CONF
 from spyder.py3compat import PY2, iteritems, to_binary_string, to_text_string
 from spyder.utils.conda import (add_quotes, get_conda_activation_script,
@@ -40,7 +41,7 @@ def is_different_interpreter(pyexec):
     return directory_validation and executable_validation
 
 
-def get_activation_script(quote=False):
+def get_activation_script(internal=False, quote=False):
     """
     Return path for bash/batch conda activation script to run spyder-kernels.
 
@@ -50,7 +51,10 @@ def get_activation_script(quote=False):
     if os.name == 'nt':
         script = 'conda-activate.bat'
     else:
-        script = 'conda-activate.sh'
+        if internal:
+            script = 'internal-activate.sh'
+        else:
+            script = 'conda-activate.sh'
 
     script_path = os.path.join(scripts_folder_path, script)
 
@@ -111,6 +115,9 @@ class SpyderKernelSpec(KernelSpec):
                 pyexec,
                 '{connection_file}',
             ]
+        elif running_in_mac_app():
+            script = get_activation_script(internal=True)
+            kernel_cmd = [script, pyexec, '{connection_file}']
         else:
             kernel_cmd = [
                 pyexec,
