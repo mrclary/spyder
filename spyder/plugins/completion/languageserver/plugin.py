@@ -21,7 +21,8 @@ from qtpy.QtCore import Slot, QTimer
 from qtpy.QtWidgets import QMessageBox, QCheckBox
 
 # Local imports
-from spyder.config.base import _, get_conf_path, running_under_pytest
+from spyder.config.base import (_, get_conf_path, running_under_pytest,
+                                running_in_mac_app)
 from spyder.config.lsp import PYTHON_CONFIG
 from spyder.config.manager import CONF
 from spyder.api.completion import SpyderCompletionPlugin
@@ -623,15 +624,23 @@ class LanguageServerPlugin(SpyderCompletionPlugin):
         }
 
         # Jedi configuration
+        extra_paths = self.get_option('spyder_pythonpath', section='main',
+                                      default=[])
+        env_vars = {}
         if self.get_option('default', section='main_interpreter'):
-            environment = None
+            environment = sys.executable
         else:
             environment = self.get_option('custom_interpreter',
                                           section='main_interpreter')
+
+        if running_in_mac_app(environment):
+            # if environment is in Mac app, PYTHONHOME required
+            env_vars.update({'PYTHONHOME': os.environ['PYTHONHOME']})
+
         jedi = {
             'environment': environment,
-            'extra_paths': self.get_option('spyder_pythonpath',
-                                           section='main', default=[]),
+            'extra_paths': extra_paths,
+            'env_vars': env_vars,
         }
         jedi_completion = {
             'enabled': self.get_option('code_completion'),
