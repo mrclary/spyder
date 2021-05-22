@@ -409,6 +409,8 @@ class OutlineExplorerTreeWidget(OneColumnTree):
     @Slot()
     def go_to_cursor_position(self):
         if self.current_editor is not None:
+            print(f'TEST: self.current_editor = {self.current_editor}')
+            print(f'TEST: self.editor_ids = {self.editor_ids}')
             editor_id = self.editor_ids[self.current_editor]
             line = self.current_editor.get_cursor_line_number()
             tree = self.editor_tree_cache[editor_id]
