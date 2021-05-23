@@ -410,10 +410,7 @@ class Projects(SpyderPluginWidget):
                 self.set_project_filenames(
                     self.main.editor.get_open_filenames())
 
-            # TODO: Don't emit sig_project_closed when we support
-            # multiple workspaces.
-            self.sig_project_closed.emit(
-                self.current_active_project.root_path)
+            # TODO: Don't stop watcher when we support multiple workspaces.
             self.watcher.stop()
 
         self.current_active_project = project
