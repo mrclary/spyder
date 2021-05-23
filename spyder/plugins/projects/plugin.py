@@ -326,7 +326,6 @@ class Projects(SpyderPluginWidget):
     def create_new_project(self):
         """Create new project."""
         self.unmaximize()
-        active_project = self.current_active_project
         dlg = ProjectDialog(self, project_types=self.get_project_types())
         result = dlg.exec_()
         data = dlg.project_data
@@ -334,19 +333,8 @@ class Projects(SpyderPluginWidget):
         project_type = data.get("project_type", EmptyProject.ID)
 
         if result:
-            # A project was not open before
-            if active_project is None:
-                if self.get_option('visible_if_project_open'):
-                    self.show_explorer()
-            else:
-                # We are switching projects.
-                # TODO: Don't emit sig_project_closed when we support
-                # multiple workspaces.
-                self.sig_project_closed.emit(active_project.root_path)
-
             self._create_project(root_path, project_type_id=project_type)
             self.sig_pythonpath_changed.emit()
-            self.restart_consoles()
             dlg.close()
 
     def _create_project(self, root_path, project_type_id=EmptyProject.ID,
