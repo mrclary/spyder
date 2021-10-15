@@ -21,18 +21,22 @@ jobs:
       LITE_FLAG: ${{ matrix.build_type == 'Lite' && '--lite' || '' }}
       DMGNAME: ${{ matrix.build_type == 'Lite' && 'Spyder-Lite.dmg' || 'Spyder.dmg' }}
       DISTDIR: ${{ github.workspace }}/dist
+      RUNBUILD: ${{ (matrix.build_type == 'Full' || github.event_name == 'release') && '1' || '0' }}
     steps:
       - name: Checkout Code
+        if: ${{ env.RUNBUILD == '1' }}
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
       - name: Setup Python
+        if: ${{ env.RUNBUILD == '1' }}
         uses: actions/setup-python@v2
         with:
           # This is the last version working with py2app and modulegraph
           python-version: '3.9.5'
           architecture: 'x64'
       - name: Install Dependencies
+        if: ${{ env.RUNBUILD == '1' }}
         run: |
           INSTALL_FLAGS=()
           if [[ -z ${LITE_FLAG} ]]; then
@@ -41,7 +45,7 @@ jobs:
           ${pythonLocation}/bin/python -m pip install -U pip setuptools wheel
           ${pythonLocation}/bin/python -m pip install -r req-build.txt -r req-extras.txt -r req-plugins.txt "${INSTALL_FLAGS[@]}" -e ${GITHUB_WORKSPACE}
       - name: Install Subrepos
-        if: ${{github.event_name == 'pull_request'}}
+        if: ${{ github.event_name == 'pull_request' && env.RUNBUILD == '1' }}
         run: |
           for dep in $(ls ${GITHUB_WORKSPACE}/external-deps)
           do
@@ -53,6 +57,7 @@ jobs:
               fi
           done
       - name: Show Build Environment
+        if: ${{ env.RUNBUILD == '1' }}
         run: |
           ${pythonLocation}/bin/python -V -V
           ${pythonLocation}/bin/python -m pip list
@@ -61,13 +66,16 @@ jobs:
         run: |
           curl -Ls https://micro.mamba.pm/api/micromamba/osx-64/latest | tar -xvj bin/micromamba
       - name: Build Application Bundle
+        if: ${{ env.RUNBUILD == '1' }}
         run: ${pythonLocation}/bin/python setup.py ${LITE_FLAG} --dist-dir ${DISTDIR}
       - name: Test Application Bundle
-        if: ${{github.event_name == 'pull_request'}}
+        if: ${{ github.event_name == 'pull_request' && env.RUNBUILD == '1' }}
         run: ./test_app.sh -t 60 -d 10 ${DISTDIR}
       - name: Build Disk Image
+        if: ${{ env.RUNBUILD == '1' }}
         run: ${pythonLocation}/bin/python setup.py ${LITE_FLAG} --dist-dir ${DISTDIR} --dmg --no-app
       - name: Upload Artifact
+        if: ${{ env.RUNBUILD == '1' }}
         uses: actions/upload-artifact@v2
         with:
           path: ${{ env.DISTDIR }}/${{ env.DMGNAME }}
