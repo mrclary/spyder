@@ -38,6 +38,7 @@ spyder_terminal :
 # Packages that cannot be in the zip folder
 PACKAGES = [
     'humanfriendly',
+    'pandas',
     'pkg_resources',
     'pyls_spyder',
     'pylsp_black',
@@ -60,7 +61,6 @@ SCIENTIFIC = [
     'cython',
     'matplotlib',
     'numpy',
-    'pandas',
     'scipy',
     'sympy',
 ]
