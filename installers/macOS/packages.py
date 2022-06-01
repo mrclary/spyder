@@ -53,6 +53,8 @@ EXCLUDES = []
 # modules that py2app misses
 INCLUDES = [
     'jellyfish',
+    'numpy',
+    'pandas',
     'pylsp',
 ]
 
@@ -60,7 +62,6 @@ SCIENTIFIC = [
     'cython',
     'matplotlib',
     'numpy',
-    'pandas',
     'scipy',
     'sympy',
 ]
