@@ -35,7 +35,10 @@ jobs:
       LITE_FLAG: ${{ matrix.build_type == 'Lite' && '--lite' || '' }}
       DMGNAME: ${{ matrix.build_type == 'Lite' && 'Spyder-Lite.dmg' || 'Spyder.dmg' }}
       DISTDIR: ${{ github.workspace }}/dist
+      TEST: ${{ github.event_name }}
     steps:
+      - name: Test
+        run: echo "TEST = ${TEST}"
       - name: Checkout Code
         uses: actions/checkout@v2
         with:
