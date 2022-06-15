@@ -12,7 +12,7 @@ jobs:
     runs-on: macos-10.15
     strategy:
       matrix:
-        build_type: ${{ github.event_name == 'release' && ['Full', 'Lite'] || ['Full'] }}
+        build_type: ${{ github.event_name == 'release' && "['Full', 'Lite']" || "['Full']" }}
     defaults:
       run:
         shell: bash -l {0}
