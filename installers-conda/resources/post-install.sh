@@ -40,11 +40,12 @@ if [[ -e "$app_path" ]]; then
 
     echo "Modifying application executable..."
 cat <<EOF > $app_path/Contents/MacOS/__NAME__
-#!/bin/bash
-eval "\$(/bin/bash -l -c "declare -x")"
+#!/bin/sh
+eval "\$(\$SHELL -l -c "declare -x")"
 eval "\$("$ROOT_PREFIX/_conda.exe" shell.bash activate "$PREFIX")"
-export SPYDER_APP=0
-\$(dirname \$BASH_SOURCE)/python $PREFIX/bin/spyder "\$@"
+HERE=\$(dirname \$BASH_SOURCE)
+export SPYDER_APP=\$(cd "\${HERE}../../" && pwd -P)
+\$HERE/python \$CONDA_PREFIX/bin/spyder "\$@"
 
 EOF
 else
