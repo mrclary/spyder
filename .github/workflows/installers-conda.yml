@@ -1,5 +1,10 @@
 on:
   pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - labeled
     paths:
       - 'installers-conda/**'
       - '.github/workflows/installers-conda.yml'
@@ -28,7 +33,7 @@ concurrency:
 name: Create conda-based installers for Windows, macOS, and Linux
 
 env:
-  IS_PRE: ${{ github.event_name == 'push' && github.ref_type == 'tag' }}
+  IS_PRE: ${{ (github.event_name == 'push' && github.ref_type == 'tag') || (github.event.action == 'labeled' && github.event.label.name == 'build-installer-artifacts') }}
 
 jobs:
   build-noarch-pkgs:
@@ -252,3 +257,12 @@ jobs:
           asset_path: ${{ env.PKG_FILE }}
           asset_name: ${{ env.PKG_NAME }}
           asset_content_type: application/octet-stream
+
+  remove_label:
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-ecosystem/action-remove-labels@v1
+        with:
+          labels: build-installer-artifacts
