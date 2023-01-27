@@ -92,7 +92,6 @@ jobs:
     needs:
       - build-matrix
       - build-noarch-pkgs
-    if: ${{ ! failure() && ! cancelled() && env.DO_NOT_RUN == 'false' }}
     strategy:
       matrix:
         target-platform: ${{fromJson(needs.build-matrix.outputs.target_platform)}}
