@@ -33,13 +33,16 @@ concurrency:
 name: Create conda-based installers for Windows, macOS, and Linux
 
 env:
+  IS_RELEASE: ${{ github.event_name == 'release' }}
   IS_PRE: ${{ (github.event_name == 'push' && github.ref_type == 'tag') || (github.event.action == 'labeled' && github.event.label.name == 'build-installer-artifacts') }}
+  DO_NOT_RUN: ${{ github.event.action == 'labeled' && github.event.label.name != 'build-installer-artifacts' }}
+  IS_STANDARD_PR: ${{ contains(fromJSON('["opened", "reopened", "synchronize"]'), github.event.pull_request.action) }}
 
 jobs:
   build-noarch-pkgs:
     name: Build ${{ matrix.pkg }}
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
+    if: env.IS_STANDARD_PR == 'true'
     strategy:
       matrix:
         pkg: ["python-lsp-server", "qtconsole"]
@@ -80,6 +83,7 @@ jobs:
   build-matrix:
     name: Determine Build Matrix
     runs-on: ubuntu-latest
+    if: env.DO_NOT_RUN == 'false'
     outputs:
       target_platform: ${{ steps.build-matrix.outputs.target_platform }}
       include: ${{ steps.build-matrix.outputs.include }}
@@ -94,7 +98,7 @@ jobs:
         "
         python_version="'3.9'"
 
-        if [[ ${GITHUB_EVENT_NAME} == 'pull_request' ]]; then
+        if [[ ${IS_STANDARD_PR} == 'true' ]]; then
             target_platform=$target_platform", 'win-64'"
             include=$include",{'os': 'windows-latest', 'target-platform': 'win-64'}"
         fi
@@ -109,7 +113,7 @@ jobs:
     needs:
       - build-matrix
       - build-noarch-pkgs
-    if: ${{ ! failure() && ! cancelled() }}
+    if: ${{ ! failure() && ! cancelled() && env.DO_NOT_RUN == 'false'}}
     strategy:
       matrix:
         target-platform: ${{fromJson(needs.build-matrix.outputs.target_platform)}}
@@ -164,7 +168,7 @@ jobs:
           env
 
       - name: Download Local Conda Packages
-        if: github.event_name == 'pull_request'
+        if: env.IS_STANDARD_PR
         uses: actions/download-artifact@v3
         with:
           path: ${{ env.ARTIFACTS_PATH }}
@@ -193,7 +197,7 @@ jobs:
           python build_conda_pkgs.py --build ${pkgs[@]}
 
       - name: Create Keychain
-        if: (github.event_name == 'release' || env.IS_PRE == 'true') && runner.os == 'macOS'
+        if: (env.IS_RELEASE == 'true' || env.IS_PRE == 'true') && runner.os == 'macOS'
         run: |
           ./certkeychain.sh "${MACOS_CERTIFICATE_PWD}" "${MACOS_CERTIFICATE}" "${MACOS_INSTALLER_CERTIFICATE}"
           CNAME=$(security find-identity -p codesigning -v | pcregrep -o1 "\(([0-9A-Z]+)\)")
@@ -231,7 +235,7 @@ jobs:
           fi
 
       - name: Notarize package installer
-        if: (github.event_name == 'release' || env.IS_PRE == 'true') && runner.os == 'macOS'
+        if: (env.IS_RELEASE == 'true' || env.IS_PRE == 'true') && runner.os == 'macOS'
         run: ./notarize.sh -p $APPLICATION_PWD $PKG_FILE
 
       - name: Upload Artifact
@@ -241,14 +245,14 @@ jobs:
           name: ${{ env.PKG_NAME }}
 
       - name: Get Release
-        if: github.event_name == 'release'
+        if: env.IS_RELEASE
         id: get_release
         env:
           GITHUB_TOKEN: ${{ github.token }}
         uses: bruceadams/get-release@v1.2.0
 
       - name: Upload Release Asset
-        if: github.event_name == 'release'
+        if: env.IS_RELEASE
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -260,7 +264,7 @@ jobs:
 
   remove_label:
     runs-on: ubuntu-latest
-    if: always()
+    if: always() && github.event.action == 'labeled' && github.event.label.name == 'build-installer-artifacts'
     steps:
       - uses: actions/checkout@v3
       - uses: actions-ecosystem/action-remove-labels@v1
