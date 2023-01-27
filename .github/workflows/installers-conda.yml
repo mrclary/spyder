@@ -42,6 +42,7 @@ jobs:
   build-noarch-pkgs:
     name: Build ${{ matrix.pkg }}
     runs-on: ubuntu-latest
+    if: env.IS_STANDARD_PR == 'true'
     strategy:
       matrix:
         pkg: ["python-lsp-server", "qtconsole"]
@@ -61,6 +62,7 @@ jobs:
   build-matrix:
     name: Determine Build Matrix
     runs-on: ubuntu-latest
+    if: env.DO_NOT_RUN == 'false'
     outputs:
       target_platform: ${{ steps.build-matrix.outputs.target_platform }}
       include: ${{ steps.build-matrix.outputs.include }}
@@ -90,6 +92,7 @@ jobs:
     needs:
       - build-matrix
       - build-noarch-pkgs
+    if: ${{ ! failure() && ! cancelled() && env.DO_NOT_RUN == 'false'}}
     strategy:
       matrix:
         target-platform: ${{fromJson(needs.build-matrix.outputs.target_platform)}}
@@ -114,6 +117,7 @@ jobs:
 
   remove_label:
     runs-on: ubuntu-latest
+    if: always() && github.event.action == 'labeled' && github.event.label.name == 'build-installer-artifacts'
     steps:
       - name: Test
         run: printenv
