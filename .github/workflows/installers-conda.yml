@@ -50,35 +50,14 @@ jobs:
     defaults:
       run:
         shell: bash -l {0}
-        working-directory: ${{ github.workspace }}/installers-conda
     env:
       DISTDIR: ${{ github.workspace }}/installers-conda/dist
       pkg: ${{ matrix.pkg }}
       artifact_name: ${{ matrix.pkg }}_${{ matrix.python-version }}
 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
-      - name: Setup Build Environment
-        uses: mamba-org/provision-with-micromamba@main
-        with:
-          environment-file: installers-conda/build-environment.yml
-          extra-specs: python=${{ matrix.python-version }}
-
-      - name: Build Conda Packages
-        run: python build_conda_pkgs.py --build $pkg
-
-      - name: Build Artifact
-        run: tar -a -C $CONDA_PREFIX -cf $PWD/${artifact_name}.tar.bz2 conda-bld
-
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v3
-        with:
-          path: ${{ github.workspace }}/installers-conda/${{ env.artifact_name }}.tar.bz2
-          name: ${{ env.artifact_name }}
+      - name: Test
+        run: printenv
 
   build-matrix:
     name: Determine Build Matrix
@@ -122,7 +101,6 @@ jobs:
     defaults:
       run:
         shell: bash -l {0}
-        working-directory: ${{ github.workspace }}/installers-conda
     env:
       DISTDIR: ${{ github.workspace }}/installers-conda/dist
       MACOS_CERTIFICATE_PWD: ${{ secrets.MACOS_CERTIFICATE_PWD }}
@@ -134,139 +112,12 @@ jobs:
       MAT_STATUS: ${{ needs.build-matrix.result }}
 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
-      - name: Install pcregrep
-        if: runner.os == 'macOS'
-        run: |
-          if [[ -z "$(which pcregrep)" ]]; then
-              brew install pcre
-          else
-              echo "$(which pcregrep) already installed."
-          fi
-
-      - name: Setup Build Environment
-        uses: mamba-org/provision-with-micromamba@main
-        with:
-          environment-file: installers-conda/build-environment.yml
-          extra-specs: python=${{ matrix.python-version }}
-
-      - name: Env Variables
-        run: |
-          ARTIFACTS_PATH=$RUNNER_TEMP/artifacts
-          CONDA_BLD_PATH=$RUNNER_TEMP/conda-bld
-
-          echo "ARTIFACTS_PATH=$ARTIFACTS_PATH" >> $GITHUB_ENV
-          echo "CONDA_BLD_PATH=$CONDA_BLD_PATH" >> $GITHUB_ENV
-
-          [[ -d $ARTIFACTS_PATH ]] || mkdir $ARTIFACTS_PATH
-          [[ -d $CONDA_BLD_PATH ]] || mkdir $CONDA_BLD_PATH
-
-          env
-
-      - name: Download Local Conda Packages
-        if: env.IS_STANDARD_PR
-        uses: actions/download-artifact@v3
-        with:
-          path: ${{ env.ARTIFACTS_PATH }}
-
-      - name: Create Local Conda Channel
-        run: |
-          files=($(find $ARTIFACTS_PATH -name *.tar.bz2))
-          echo ${files[@]}
-          cd $(dirname $CONDA_BLD_PATH)
-
-          [[ $RUNNER_OS == "Windows" ]] && opts=("--force-local") || opts=()
-          for file in ${files[@]}; do
-              tar -xf $file ${opts[@]}
-          done
-
-          mamba index $CONDA_BLD_PATH
-
-          mamba search -c $CONDA_BLD_PATH --override-channels || true
-
-      - name: Build ${{ matrix.target-platform }} conda packages
-        run: |
-          pkgs=("spyder")
-          if [[ $GITHUB_EVENT_NAME == "pull_request" ]]; then
-              pkgs+=("spyder-kernels")
-          fi
-          python build_conda_pkgs.py --build ${pkgs[@]}
-
-      - name: Create Keychain
-        if: (env.IS_RELEASE == 'true' || env.IS_PRE == 'true') && runner.os == 'macOS'
-        run: |
-          ./certkeychain.sh "${MACOS_CERTIFICATE_PWD}" "${MACOS_CERTIFICATE}" "${MACOS_INSTALLER_CERTIFICATE}"
-          CNAME=$(security find-identity -p codesigning -v | pcregrep -o1 "\(([0-9A-Z]+)\)")
-          echo "CNAME=$CNAME" >> $GITHUB_ENV
-
-          _codesign=$(which codesign)
-          if [[ $_codesign =~ ${CONDA_PREFIX}.* ]]; then
-              # Find correct codesign
-              echo "Moving $_codesign..."
-              mv $_codesign ${_codesign}.bak
-          fi
-
-      - name: Build Package Installer
-        run: |
-          [[ -n $CNAME ]] && args=("--cert-id" "$CNAME") || args=()
-          python build_installers.py ${args[@]}
-          PKG_FILE=$(python build_installers.py --artifact-name)
-          PKG_NAME=$(basename $PKG_FILE)
-          echo "PKG_FILE=$PKG_FILE" >> $GITHUB_ENV
-          echo "PKG_NAME=$PKG_NAME" >> $GITHUB_ENV
-
-      - name: Test Application Bundle
-        if: runner.os == 'macOS'
-        run: |
-          installer -dumplog -pkg $PKG_FILE -target CurrentUserHomeDirectory 2>&1
-          app_path=$HOME/Applications/Spyder.app
-          if [[ -e "$app_path" ]]; then
-              ls -al $app_path/Contents/MacOS
-              cat $app_path/Contents/Info.plist
-              echo ""
-              cat $app_path/Contents/MacOS/spyder-script
-              echo ""
-          else
-              echo "$app_path does not exist"
-          fi
-
-      - name: Notarize package installer
-        if: (env.IS_RELEASE == 'true' || env.IS_PRE == 'true') && runner.os == 'macOS'
-        run: ./notarize.sh -p $APPLICATION_PWD $PKG_FILE
-
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v3
-        with:
-          path: ${{ env.PKG_FILE }}
-          name: ${{ env.PKG_NAME }}
-
-      - name: Get Release
-        if: env.IS_RELEASE
-        id: get_release
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        uses: bruceadams/get-release@v1.2.0
-
-      - name: Upload Release Asset
-        if: env.IS_RELEASE
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        with:
-          upload_url: ${{ steps.get_release.outputs.upload_url }}
-          asset_path: ${{ env.PKG_FILE }}
-          asset_name: ${{ env.PKG_NAME }}
-          asset_content_type: application/octet-stream
+      - name: Test
+        run: printenv
 
   remove_label:
     runs-on: ubuntu-latest
     if: always() && github.event.action == 'labeled' && github.event.label.name == 'build-installer-artifacts'
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions-ecosystem/action-remove-labels@v1
-        with:
-          labels: build-installer-artifacts
+      - name: Test
+        run: printenv
