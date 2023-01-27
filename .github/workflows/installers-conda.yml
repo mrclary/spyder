@@ -36,7 +36,7 @@ env:
   IS_RELEASE: ${{ github.event_name == 'release' }}
   IS_PRE: ${{ (github.event_name == 'push' && github.ref_type == 'tag') || (github.event.action == 'labeled' && github.event.label.name == 'build-installer-artifacts') }}
   DO_NOT_RUN: ${{ github.event.action == 'labeled' && github.event.label.name != 'build-installer-artifacts' }}
-  IS_STANDARD_PR: ${{ contains(fromJSON('["opened", "reopened", "synchronize"]'), github.event.pull_request.action) }}
+  IS_STANDARD_PR: ${{ github.event_name == 'pull_request' && github.event.action != 'labeled' }}
 
 jobs:
   build-noarch-pkgs:
