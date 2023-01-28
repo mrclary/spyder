@@ -26,6 +26,8 @@ on:
     tags:
       - v*pre*
 
+  workflow_dispatch
+
 concurrency:
   group: installers-conda-${{ github.ref }}
   cancel-in-progress: true
