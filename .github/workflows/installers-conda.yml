@@ -36,6 +36,10 @@ name: Create conda-based installers for Windows, macOS, and Linux
 
 env:
   IS_STANDARD_PR: ${{ github.event_name == 'pull_request' && github.event.action != 'labeled' }}
+  IS_BUILD: ${{ github.event.action != 'labeled' || github.event.label.name == 'build-installer-artifacts' }}
+  IS_LABELED_PR: ${{ github.event.action == 'labeled' && github.event.label.name == 'build-installer-artifacts' }}
+  IS_RELEASE: ${{ github.event_name == 'release' }}
+  IS_PRE: ${{ contains(fromJSON('["workflow_dispatch", "push"]'), github.event_name) || (github.event.action == 'labeled' && github.event.label.name == 'build-installer-artifacts') }}
 
 jobs:
   build-noarch-pkgs:
@@ -112,7 +116,7 @@ jobs:
     needs:
       - build-matrix
       - build-noarch-pkgs
-    if: ${{ ! failure() && ! cancelled() && (github.event.action != 'labeled' || github.event.label.name == 'build-installer-artifacts') }}
+    if: ${{ ! failure() && ! cancelled() }}
     strategy:
       matrix:
         target-platform: ${{fromJson(needs.build-matrix.outputs.target_platform)}}
@@ -129,7 +133,7 @@ jobs:
       MACOS_INSTALLER_CERTIFICATE: ${{ secrets.MACOS_INSTALLER_CERTIFICATE }}
       APPLICATION_PWD: ${{ secrets.APPLICATION_PWD }}
       CONSTRUCTOR_TARGET_PLATFORM: ${{ matrix.target-platform }}
-      STATUS: ${{ needs.build-noarch-pkgs.result }}
+      BNP_STATUS: ${{ needs.build-noarch-pkgs.result }}
       MAT_STATUS: ${{ needs.build-matrix.result }}
 
     steps:
@@ -167,7 +171,7 @@ jobs:
           env
 
       - name: Download Local Conda Packages
-        if: github.event_name == 'pull_request' && github.event.action != 'labeled'
+        if: env.IS_STANDARD_PR
         uses: actions/download-artifact@v3
         with:
           path: ${{ env.ARTIFACTS_PATH }}
@@ -196,7 +200,7 @@ jobs:
           python build_conda_pkgs.py --build ${pkgs[@]}
 
       - name: Create Keychain
-        if: runner.os == 'macOS' && (github.event_name != 'pull_request' || github.event.action == 'labeled')
+        if: runner.os == 'macOS' && (env.IS_RELEASE == 'true' || env.IS_PRE == 'true')
         run: |
           ./certkeychain.sh "${MACOS_CERTIFICATE_PWD}" "${MACOS_CERTIFICATE}" "${MACOS_INSTALLER_CERTIFICATE}"
           CNAME=$(security find-identity -p codesigning -v | pcregrep -o1 "\(([0-9A-Z]+)\)")
@@ -234,7 +238,7 @@ jobs:
           fi
 
       - name: Notarize package installer
-        if: runner.os == 'macOS' && (github.event_name != 'pull_request' || github.event.action == 'labeled')
+        if: runner.os == 'macOS' && (env.IS_RELEASE == 'true' || env.IS_PRE == 'true')
         run: ./notarize.sh -p $APPLICATION_PWD $PKG_FILE
 
       - name: Upload Artifact
