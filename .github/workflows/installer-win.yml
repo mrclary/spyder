@@ -49,14 +49,14 @@ jobs:
       matrix:
         build_type: ['Lite', 'Full']
     env:
-      UNWANTED_PACKAGES: ${{env.IS_STANDARD_PR == 'true' && 'pip spyder-kernels python-slugify Rtree QDarkStyle PyNaCl psutil' || 'pip python-slugify Rtree PyNaCl psutil' }}
+      UNWANTED_PACKAGES: ${{github.event_name == 'pull_request' && github.event.action != 'labeled' && 'pip spyder-kernels python-slugify Rtree QDarkStyle PyNaCl psutil' || 'pip python-slugify Rtree PyNaCl psutil' }}
       SKIP_PACKAGES: 'bcrypt slugify'
-      ADD_PACKAGES: ${{env.IS_STANDARD_PR == 'true' && 'spyder_kernels blib2to3 _black_version blackd rtree qdarkstyle nacl psutil' || 'blib2to3 _black_version blackd rtree nacl psutil' }}
+      ADD_PACKAGES: ${{github.event_name == 'pull_request' && github.event.action != 'labeled' && 'spyder_kernels blib2to3 _black_version blackd rtree qdarkstyle nacl psutil' || 'blib2to3 _black_version blackd rtree nacl psutil' }}
       PYNSIST_REQ: pynsist==2.7
-      EXTRA_FLAG: ${{ matrix.build_type == 'Full' && env.IS_STANDARD_PR == 'true' && '-ep installers/Windows/req-extras-pull-request.txt' || matrix.build_type == 'Lite' && env.IS_STANDARD_PR == 'true' && '-ep installers/Windows/req-pull-request.txt' || matrix.build_type == 'Full' && '-ep installers/Windows/req-extras-release.txt' || '-ep installers/Windows/req-release.txt' }}
+      EXTRA_FLAG: ${{ matrix.build_type == 'Full' && github.event_name == 'pull_request' && github.event.action != 'labeled' && '-ep installers/Windows/req-extras-pull-request.txt' || matrix.build_type == 'Lite' && github.event_name == 'pull_request' && github.event.action != 'labeled' && '-ep installers/Windows/req-pull-request.txt' || matrix.build_type == 'Full' && '-ep installers/Windows/req-extras-release.txt' || '-ep installers/Windows/req-release.txt' }}
       SUFFIX_FLAG: ${{ matrix.build_type == 'Lite' && '-s lite' || '-s full' }}
       TEMPLATE_FAG: '-t installers/Windows/assets/nsist/spyder.nsi'
-      EXE_NAME: ${{ matrix.build_type == 'Lite' && env.IS_STANDARD_PR == 'true' && 'Spyder_64bit_lite.exe' || matrix.build_type == 'Lite' && 'Spyder_64bit_lite.exe' || 'Spyder_64bit_full.exe' }}
+      EXE_NAME: ${{ matrix.build_type == 'Lite' && github.event_name == 'pull_request' && github.event.action != 'labeled' && 'Spyder_64bit_lite.exe' || matrix.build_type == 'Lite' && 'Spyder_64bit_lite.exe' || 'Spyder_64bit_full.exe' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
