@@ -53,9 +53,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        INSTALL_TYPE: ['conda']
-        PYTHON_VERSION: ['3.10']
-        TEST_TYPE: ['fast']
+        INSTALL_TYPE: ['pip', 'conda']
+        PYTHON_VERSION: ['3.8', '3.10']
+        TEST_TYPE: ['fast', 'slow']
     timeout-minutes: 120
     steps:
       - name: Checkout Pull Requests
@@ -121,8 +121,6 @@ jobs:
           micromamba info
           micromamba list
           pip list
-          printenv
-          ls -a ~
       #- name: Setup tmate session
       #  if: env.USE_CONDA == 'true'
       #  uses: mxschmitt/action-tmate@v3
@@ -138,9 +136,9 @@ jobs:
         shell: bash -l {0}
         run: |
           rm -f pytest_log.txt  # Must remove any log file from a previous run
-          # bash -l .github/scripts/run_tests.sh || \
-          # bash -l .github/scripts/run_tests.sh || \
-          # bash -l .github/scripts/run_tests.sh || \
+          bash -l .github/scripts/run_tests.sh || \
+          bash -l .github/scripts/run_tests.sh || \
+          bash -l .github/scripts/run_tests.sh || \
           bash -l .github/scripts/run_tests.sh
       - name: Coverage
         shell: bash -l {0}
