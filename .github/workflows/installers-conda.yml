@@ -217,6 +217,8 @@ jobs:
           ls -al $root_prefix
           echo -e "\nContents of ${root_prefix}/uninstall-spyder.sh:"
           cat $root_prefix/uninstall-spyder.sh
+          echo -e "\nContents of $HOME/.bashrc:"
+          cat $HOME/.bashrc
 
           app_path=/Applications/Spyder.app
           [[ -e ${root_prefix}/.nonadmin ]] && app_path=${HOME}${app_path}
@@ -245,6 +247,8 @@ jobs:
           ls -al $root_prefix
           echo -e "\nContents of ${root_prefix}/uninstall-spyder.sh:"
           cat ${root_prefix}/uninstall-spyder.sh
+          echo -e "\nContents of $HOME/.bashrc:"
+          cat $HOME/.bashrc
 
           shortcut_path=/share/applications/spyder_spyder.desktop
           [[ -e ${root_prefix}/.nonadmin ]] && shortcut_path=${HOME}/.local${shortcut_path} || shortcut_path=/usr${shortcut_path}
