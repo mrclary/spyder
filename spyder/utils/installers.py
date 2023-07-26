@@ -26,6 +26,7 @@ class SpyderInstallerError(object):
     """
     logger = logging.getLogger('Installer')
     logger.setLevel(logging.DEBUG)
+
     def __init__(self, msg):
         if not running_installer_test():
             # Don't do anything
@@ -43,6 +44,7 @@ class SpyderInstallerError(object):
 
 class InstallerMissingDependencies(SpyderInstallerError):
     """Error for missing dependencies"""
+
     def _msg(self, msg):
         msg = msg.replace('<br>', '\n')
         msg = 'Missing dependencies' + textwrap.indent(msg, '  ')
@@ -52,6 +54,7 @@ class InstallerMissingDependencies(SpyderInstallerError):
 
 class InstallerIPythonKernelError(SpyderInstallerError):
     """Error for IPython kernel issues"""
+
     def _msg(self, msg):
         msg = msg.replace('<tt>', '').replace('</tt>', '')
         msg = 'IPython kernel error\n' + textwrap.indent(msg, '  ')
@@ -61,6 +64,7 @@ class InstallerIPythonKernelError(SpyderInstallerError):
 
 class InstallerInternalError(SpyderInstallerError):
     """Error for internal issues"""
+
     def _msg(self, msg):
         msg = 'Spyder internal error\n' + textwrap.indent(msg, '  ')
 
@@ -69,6 +73,7 @@ class InstallerInternalError(SpyderInstallerError):
 
 class InstallerPylspError(SpyderInstallerError):
     """Error for PyLSP issues"""
+
     def _msg(self, msg):
 
         files = glob.glob(os.path.join(get_conf_path('lsp_logs'), '*.log'))
