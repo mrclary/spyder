@@ -204,6 +204,9 @@ jobs:
       - name: Test ${{ runner.os }} Installer
         run: ./test_install.sh $PKG_PATH
 
+      - name: Test ${{ runner.os }} Application
+        run: ./test_app.sh
+
       - name: Notarize or Compute Checksum
         if: env.IS_RELEASE == 'true' || env.IS_PRE == 'true'
         run: |
