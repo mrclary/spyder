@@ -192,8 +192,6 @@ fi
 echo "*** Post install script for ${INSTALLER_NAME} complete"
 
 # ----
-[[ -n "$CI" ]] && exit 0  # Running in CI, don't launch Spyder
-
 echo "Launching Spyder now..."
 if [[ "$OSTYPE" = "darwin"* ]]; then
     tmp_dir=${TMPDIR:-$SHARED_INSTALLER_TEMP/}spyder
