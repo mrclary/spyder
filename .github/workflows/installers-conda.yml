@@ -249,6 +249,20 @@ jobs:
               exit 1
           fi
 
+          # Verify Spyder launched after successful install
+          t=10
+          while [[ $t > 0 && ! $(pgrep -f spyder-runtime/bin/spyder 2>/dev/null) ]]; do
+              log "Wating for Spyder to launch..."
+              sleep 1
+              ((t -= 1))
+          done
+          if [[ $t > 0 ]]; then
+              log "Spyder launched successfully"
+          else
+              log "Spyder failed to launch"
+              exit 1
+          fi
+
       - name: Test Windows Installer
         if: runner.os == 'Windows'
         shell: cmd
