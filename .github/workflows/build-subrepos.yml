@@ -39,7 +39,7 @@ jobs:
 
       - name: Cache Unix ${{ matrix.pkg }} Conda Build
         if: matrix.os != 'windows-latest'
-        id: cache
+        id: unix-cache
         uses: actions/cache@v3
         with:
           path: installers-conda/build/conda-bld/**/*.tar.bz2
@@ -48,7 +48,7 @@ jobs:
 
       - name: Cache Windows ${{ matrix.pkg }} Conda Build
         if: matrix.os == 'windows-latest'
-        id: cache
+        id: win-cache
         uses: actions/cache@v3
         with:
           path: installers-conda/build/conda-bld/**/*.tar.bz2
@@ -56,7 +56,7 @@ jobs:
           lookup-only: true
 
       - name: Setup Build Environment
-        if: steps.cache.outputs.cache-hit != 'true'
+        if: steps.unix-cache.outputs.cache-hit != 'true' && steps.win-cache.outputs.cache-hit != 'true'
         uses: mamba-org/setup-micromamba@v1
         with:
           environment-file: installers-conda/build-environment.yml
@@ -65,7 +65,7 @@ jobs:
           cache-environment: true
 
       - name: Build ${{ matrix.pkg }} Conda Package
-        if: steps.cache.outputs.cache-hit != 'true'
+        if: steps.unix-cache.outputs.cache-hit != 'true' && steps.win-cache.outputs.cache-hit != 'true'
         env:
           CONDA_BLD_PATH: ${{ github.workspace }}/installers-conda/build/conda-bld
         run: python build_conda_pkgs.py --build $pkg
