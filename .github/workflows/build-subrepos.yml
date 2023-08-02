@@ -38,7 +38,7 @@ jobs:
           fetch-depth: 0
 
       - name: Cache Unix ${{ matrix.pkg }} Conda Build
-        if: matrix.os != "windows-latest"
+        if: matrix.os != 'windows-latest'
         id: cache
         uses: actions/cache@v3
         with:
@@ -47,7 +47,7 @@ jobs:
           lookup-only: true
 
       - name: Cache Windows ${{ matrix.pkg }} Conda Build
-        if: matrix.os == "windows-latest"
+        if: matrix.os == 'windows-latest'
         id: cache
         uses: actions/cache@v3
         with:
