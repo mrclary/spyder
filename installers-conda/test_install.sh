@@ -21,7 +21,7 @@ else
 fi
 
 # ---- Show Install Results
-echo "Install info:"
+log "Install info:"
 if [[ "$OSTYPE" = "darwin"* ]]; then
     root_prefix=$(compgen -G $HOME/Library/spyder-*)
     shortcut_path=$HOME/Applications/Spyder.app
@@ -40,6 +40,7 @@ if [[ "$OSTYPE" = "darwin"* ]]; then
         cat $shortcut_path/Contents/Info.plist
         log "Contents of $shortcut_path/Contents/MacOS/spyder-script:"
         cat $shortcut_path/Contents/MacOS/spyder-script
+        echo ""
     else
         log "$shortcut_path does not exist"
         exit 1
@@ -81,8 +82,10 @@ fi
 # ---- Verify Spyder Launched
 if [[ "$OSTYPE" = "msys" ]]; then
     spy_running_cmd="tasklist.exe | grep python.exe >/dev/null"
+    spy_quit_cmd="taskkill.exe /T /fi python*"
 else
     spy_running_cmd="pgrep -f spyder-runtime/bin/spyder 2>/dev/null"
+    spy_quit_cmd="pkill -SIGTERM -f spyder-runtime/bin/spyder"
 fi
 t=20
 while [[ $t > 0 && ! $($spy_running_cmd) ]]; do
@@ -92,6 +95,8 @@ while [[ $t > 0 && ! $($spy_running_cmd) ]]; do
 done
 if [[ $t > 0 ]]; then
     log "Spyder launched successfully after install in $((20 - t))s"
+    log "Quitting Spyder..."
+    $spy_quit_cmd
 else
     log "Spyder failed to launch"
     exit 1
