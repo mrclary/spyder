@@ -30,7 +30,7 @@ EOF
 }
 
 log(){
-    echo "$(date "+%Y-%m-%d %H:%M:%S") [test_app] -> $@"
+    echo "$(date "+%Y-%m-%d %H:%M:%S") [test-app] -> $@"
 }
 
 # Options.
