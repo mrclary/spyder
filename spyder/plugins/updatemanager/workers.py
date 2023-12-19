@@ -74,14 +74,20 @@ class WorkerUpdate(QObject):
 
     def _check_update_available(self):
         """Checks if there is an update available from releases."""
-        # Filter releases
-        releases = self.releases.copy()
-        if self.stable_only:
-            # Only use stable releases
-            releases = [r for r in releases if is_stable_version(r)]
+        self.latest_release = __version__
+        for release in reversed(self.releases):
+            if (
+                is_stable_version(release)
+                or (not self.stable_only
+                    and parse(__version__).major < parse(release).major)
+            ):
+                # 1. If the latest release is stable, we can always take it.
+                # 2. Because non-stable releases are not available on
+                #   conda-forge, non-stable updates must be major.
+                self.latest_release = release
+                break
         logger.debug(f"Available versions: {self.releases}")
 
-        self.latest_release = releases[-1] if releases else __version__
         self.update_available = check_version(
             __version__,
             self.latest_release,
