@@ -23,7 +23,7 @@ from qtpy.QtWidgets import QMessageBox, QWidget, QProgressBar, QPushButton
 from spyder import __version__
 from spyder.api.config.mixins import SpyderConfigurationAccessor
 from spyder.api.translations import _
-from spyder.config.base import is_conda_based_app
+from spyder.config.base import is_conda_based_app, is_stable_version
 from spyder.config.utils import is_anaconda
 from spyder.plugins.updatemanager.workers import (
     WorkerUpdate,
@@ -290,7 +290,13 @@ class UpdateManagerWidget(QWidget, SpyderConfigurationAccessor):
                 manual_update_messagebox(
                     self, self.latest_release, self.update_worker.channel
                 )
-        elif major_update:
+        elif (
+            major_update
+            or not is_stable_version(self.latest_release)
+        ):
+            # 1. Major update require sdownload.
+            # 2. Non-stable minor update requires download because it is not
+            #   available on conda-forge.
             msg = _("Would you like to automatically download "
                     "and install it?")
             box = confirm_messagebox(
@@ -300,7 +306,7 @@ class UpdateManagerWidget(QWidget, SpyderConfigurationAccessor):
             if box.result() == QMessageBox.Yes:
                 self._start_download()
         else:
-            # Minor release for conda-based application will update with conda
+            # Minor stable release for conda-based app will update with conda
             self._confirm_install()
 
     def _start_download(self):
