@@ -229,8 +229,8 @@ jobs:
           python build_conda_pkgs.py --build spyder
 
       - name: Create Local Conda Channel
-        if: env.USE_SUBREPOS == 'true' || env.IS_RELEASE == 'false'
         run: |
+          mkdir -p $CONDA_BLD_PATH
           conda config --set bld_path $CONDA_BLD_PATH
           conda index $CONDA_BLD_PATH
           mamba search -c local --override-channels || true
