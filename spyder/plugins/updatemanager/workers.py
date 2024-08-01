@@ -146,7 +146,7 @@ class WorkerUpdate(BaseWorker):
         self.latest_release = None
         self.update_available = False
         error_msg = None
-        url = 'https://api.github.com/repos/spyder-ide/spyder/releases'
+        url = 'https://api.github.com/repos/mrclary/spyder/releases'
 
         # If Spyder is installed from defaults channel (pkgs/main), then use
         # that channel to get updates. The defaults channel can be far behind
@@ -252,7 +252,7 @@ class WorkerDownloadInstaller(BaseWorker):
     def _download_installer(self):
         """Donwload Spyder installer."""
         url = (
-            'https://github.com/spyder-ide/spyder/releases/download/'
+            'https://github.com/mrclary/spyder/releases/download/'
             f'v{self.latest_release}/{osp.basename(self.installer_path)}'
         )
         logger.info(f"Downloading {url} to {self.installer_path}")
