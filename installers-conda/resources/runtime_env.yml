@@ -7,6 +7,9 @@ channels:
 dependencies:
   - python =3.12.11
   - spyder
+  - spyder-line-profiler >=0.4
+  - spyder-notebook >=0.7
+  - spyder-unittest >=0.7
   - chardet <7.0.0  # Constrain for licensing reasons
   - cython
   - matplotlib-base
