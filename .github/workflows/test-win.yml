@@ -164,6 +164,7 @@ jobs:
           verbose: true
 
       - name: Micromamba cache kluge
+        if: always()
         shell: bash -l {0}
         run: |
           zlibfile=/c/Users/runneradmin/micromamba/pkgs/libzlib*/zlib.dll
