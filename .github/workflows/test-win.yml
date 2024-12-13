@@ -148,7 +148,6 @@ jobs:
         shell: bash -l {0}
         run: check-manifest
       - name: Run tests
-        if: false
         shell: bash -l {0}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -159,7 +158,6 @@ jobs:
           .github/scripts/run_tests.sh || \
           .github/scripts/run_tests.sh
       - name: Coverage
-        if: false
         uses: codecov/codecov-action@v4
         with:
           fail_ci_if_error: false
