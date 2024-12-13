@@ -162,3 +162,12 @@ jobs:
         with:
           fail_ci_if_error: false
           verbose: true
+
+      - name: Micromamba cache kluge
+        shell: bash -l {0}
+        run: |
+          zlibfile=/c/Users/runneradmin/micromamba/pkgs/libzlib*/zlib.dll
+          if [[ -e $zlibfile ]]; then
+              ls -al $zlibfile
+              mv -fv $zlibfile /c/Users/runneradmin
+          fi
