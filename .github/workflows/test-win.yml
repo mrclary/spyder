@@ -74,9 +74,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        INSTALL_TYPE: ['conda']
+        INSTALL_TYPE: ['pip', 'conda']
         PYTHON_VERSION: ['3.11']
-        TEST_TYPE: ['fast']
+        TEST_TYPE: ['fast', 'slow']
     timeout-minutes: 90
     steps:
       - name: Setup Remote SSH Connection
