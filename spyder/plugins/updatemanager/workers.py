@@ -124,7 +124,7 @@ def get_github_releases(
         Dictionary of release information.
     """
     url = "https://api.github.com/repos/{}/releases".format(
-        "spyder-ide/spyder-updater" if updater else "spyder-ide/spyder"
+        "mrclary/spyder-updater" if updater else "spyder-ide/spyder"
     )
 
     if tags is None:
