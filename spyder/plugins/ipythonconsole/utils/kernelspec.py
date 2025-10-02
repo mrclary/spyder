@@ -234,10 +234,7 @@ class SpyderKernelSpec(KernelSpec, SpyderConfigurationAccessor):
     @property
     def env(self):
         """Environment variables for kernels"""
-        # Ensure that user environment variables are included, but don't
-        # override existing environ values
         env_vars = self._env_vars.copy()
-        env_vars.update(os.environ)
 
         default_interpreter = self.get_conf(
             'default', section='main_interpreter'
