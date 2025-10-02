@@ -378,17 +378,19 @@ class PathManager(QDialog, SpyderWidgetMixin):
     @Slot()
     def export_pythonpath(self):
         """
-        Export to PYTHONPATH environment variable
-        Only apply to: current user.
+        Export to Spyder's PYTHONPATH Manager paths to HKCU PYTHONPATH
+        environment variable (Windows only).
 
         If the user chooses to clear the contents of the system PYTHONPATH,
-        then the active user paths are prepended to active system paths and
-        the resulting list is saved to the system PYTHONPATH. Inactive system
-        paths are discarded. If the user chooses not to clear the contents of
-        the system PYTHONPATH, then the new system PYTHONPATH comprises the
-        inactive system paths + active user paths + active system paths, and
-        inactive system paths remain inactive. With either choice, inactive
-        user paths are retained in the user paths and remain inactive.
+        only the active user and active system paths are exported, in that
+        order.
+
+        However, if the user chooses not to clear the contents of the system
+        PYTHONPATH, then the inactive system paths are prepended to the set of
+        active user and active system paths.
+
+        With either choice, the PYTHONPATH Manager paths are updated to
+        reflect the action taken and surviving inactive paths remain inactive.
         """
         answer = QMessageBox.question(
             self,
@@ -422,14 +424,11 @@ class PathManager(QDialog, SpyderWidgetMixin):
             {p: v for p, v in system_paths.items() if not v}
         )
 
-        # Desired behavior is active_user | active_system, but Python 3.8 does
-        # not support | operator for OrderedDict.
-        new_system_paths = OrderedDict(reversed(active_system_paths.items()))
-        new_system_paths.update(reversed(active_user_paths.items()))
+        # Prioritize active user paths over active system paths
+        new_system_paths = active_user_paths | active_system_paths
         if answer == QMessageBox.No:
-            # Desired behavior is inactive_system | active_user | active_system
-            new_system_paths.update(reversed(inactive_system_paths.items()))
-        new_system_paths = OrderedDict(reversed(new_system_paths.items()))
+            # Prioritize inactive system paths
+            new_system_paths = inactive_system_paths | new_system_paths
 
         env = get_user_env()
         env['PYTHONPATH'] = list(new_system_paths.keys())
