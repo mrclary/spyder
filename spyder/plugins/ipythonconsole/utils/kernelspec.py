@@ -97,7 +97,7 @@ class SpyderKernelSpec(KernelSpec, SpyderConfigurationAccessor):
         self.display_name = 'Python 3 (Spyder)'
         self.language = 'python3'
         self.resource_dir = ''
-        self._env_vars = {}
+        self.env = {}
 
     @property
     def argv(self):
@@ -233,22 +233,15 @@ class SpyderKernelSpec(KernelSpec, SpyderConfigurationAccessor):
 
     @property
     def env(self):
-        """Env vars for kernels"""
-        default_interpreter = self.get_conf(
-            'default', section='main_interpreter'
-        )
-
+        """Environment variables for kernels"""
         # Ensure that user environment variables are included, but don't
         # override existing environ values
         env_vars = self._env_vars.copy()
         env_vars.update(os.environ)
 
-        # Avoid IPython adding the virtualenv on which Spyder is running
-        # to the kernel sys.path
-        env_vars.pop('VIRTUAL_ENV', None)
-
-        # Do not pass PYTHONPATH to kernels directly, spyder-ide/spyder#13519
-        env_vars.pop('PYTHONPATH', None)
+        default_interpreter = self.get_conf(
+            'default', section='main_interpreter'
+        )
 
         # List of modules to exclude from our UMR
         umr_namelist = self.get_conf(
@@ -279,12 +272,6 @@ class SpyderKernelSpec(KernelSpec, SpyderConfigurationAccessor):
             "SPY_TMPDIR": tmpdir_var,
         })
 
-        # This is necessary so that the kernel checks the Spyder pid for
-        # crashes and gets killed automatically when that happens.
-        # Fixes spyder-ide/spyder#22414
-        if not (running_in_ci() and os.name == "nt"):
-            env_vars["SPY_PARENT_PID"] = str(os.getpid())
-
         # App considerations
         # ??? Do we need this?
         if is_conda_based_app() and default_interpreter:
@@ -292,11 +279,6 @@ class SpyderKernelSpec(KernelSpec, SpyderConfigurationAccessor):
             # See spyder-ide/spyder#16828
             # See spyder-ide/spyder#17552
             env_vars['PYDEVD_DISABLE_FILE_VALIDATION'] = 1
-
-        # Remove this variable because it prevents starting kernels for
-        # external interpreters when present.
-        # Fixes spyder-ide/spyder#13252
-        env_vars.pop('PYTHONEXECUTABLE', None)
 
         # Making all env_vars strings
         clean_env_vars = clean_env(env_vars)
@@ -306,4 +288,23 @@ class SpyderKernelSpec(KernelSpec, SpyderConfigurationAccessor):
     @env.setter
     def env(self, env_vars):
         self._env_vars = dict(env_vars)
+
+        # Avoid IPython adding the virtualenv on which Spyder is running
+        # to the kernel sys.path
+        self._env_vars.pop('VIRTUAL_ENV', None)
+
+        # Do not pass PYTHONPATH to kernels directly, spyder-ide/spyder#13519
+        self._env_vars.pop('PYTHONPATH', None)
+
+        # Remove this variable because it prevents starting kernels for
+        # external interpreters when present.
+        # Fixes spyder-ide/spyder#13252
+        self._env_vars.pop('PYTHONEXECUTABLE', None)
+
+        # This is necessary so that the kernel checks the Spyder pid for
+        # crashes and gets killed automatically when that happens.
+        # Fixes spyder-ide/spyder#22414
+        if not (running_in_ci() and os.name == "nt"):
+            self._env_vars["SPY_PARENT_PID"] = str(os.getpid())
+
         self._env_vars.pop('PYTEST_CURRENT_TEST', None)
