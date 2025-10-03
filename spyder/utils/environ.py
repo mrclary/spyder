@@ -26,6 +26,7 @@ except Exception:
 # Third party imports
 import psutil
 from qtpy.QtWidgets import QMessageBox
+from requests.structures import CaseInsensitiveDict
 
 # Local imports
 from spyder.api.asyncdispatcher import AsyncDispatcher
@@ -91,21 +92,62 @@ def listdict2envdict(listdict):
 @AsyncDispatcher()
 async def get_user_environment_variables() -> dict:
     """
-    Get user environment variables from a subprocess.
+    Get user environment variables from the system.
+
+    If Spyder is launched from a terminal on Unix systems, the environment
+    variables are obtained from Spyder's runtime `os.environ`. Otherwise, for
+    Unix systems the environment variables are obtained from a subprocess.
+
+    For Windows, environment variables are obtained from HKLM and HKCU.
+    Standard Windows protocol is enforced in which precedance is given to HKCU
+    except that the Path variable is a concatenation of HKLM + HKCU.
 
     Returns
     -------
     env_var : dict
-        Key-value pairs of environment variables. All values are strings.
+        Key-value pairs of environment variables, sorted by key.
+        All values are strings.
     """
-    env_var = {}
+    env_vars = {}
 
     if os.name == 'nt':
-        key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, "Environment")
+        # HKLM Environment variables
+        key = winreg.OpenKey(
+            winreg.HKEY_LOCAL_MACHINE,
+            r"SYSTEM\CurrentControlSet\Control\Session Manager\Environment"
+        )
         num_values = winreg.QueryInfoKey(key)[1]
-        env_var = dict(
+        env_vars = CaseInsensitiveDict(
             [winreg.EnumValue(key, k)[:2] for k in range(num_values)]
         )
+
+        # HKCU Environment variables
+        key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, "Environment")
+        num_values = winreg.QueryInfoKey(key)[1]
+        user_env_vars = CaseInsensitiveDict(
+            [winreg.EnumValue(key, k)[:2] for k in range(num_values)]
+        )
+
+        # Required variables missing from HKLM/HKCU
+        os_environ_ci = CaseInsensitiveDict(os.environ)
+        env_vars.update({
+            "SYSTEMROOT": os_environ_ci.get("SYSTEMROOT"),
+            "USERPROFILE": os_environ_ci.get("USERPROFILE"),
+        })
+
+        # Path should be system Path + user Path
+        path = env_vars.get("path", "").split(";")  # System paths
+        path.extend(user_env_vars.get("path", "").split(";"))  # Add user paths
+        path = ";".join([p for p in path if p])  # Stringify
+
+        # User variables supercede system variables, case insensitive
+        env_vars.update(user_env_vars)
+        env_vars["path"] = path
+
+        # Expand variables
+        for k, v in env_vars.items():
+            env_vars[k] = os.path.expandvars(v)
+
     elif os.name == 'posix':
         # Detect if the Spyder process was launched from a system terminal.
         # This is None if that was not the case.
@@ -129,14 +171,13 @@ async def get_user_environment_variables() -> dict:
                 if stderr:
                     logger.info(stderr.decode().strip())
                 if stdout:
-                    env_var = eval(stdout.decode(), None)
+                    env_vars = eval(stdout.decode(), None)
             except Exception as exc:
                 logger.info(exc)
         else:
-            env_var = dict(os.environ)
+            env_vars = os.environ
 
-    env_var = dict(sorted(env_var.items()))
-    return env_var
+    return dict(sorted(env_vars.items()))
 
 
 def get_user_env() -> dict:
