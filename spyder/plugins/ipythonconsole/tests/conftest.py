@@ -30,7 +30,9 @@ from spyder.plugins.debugger.plugin import Debugger
 from spyder.plugins.help.utils.sphinxify import CSS_PATH
 from spyder.plugins.ipythonconsole.plugin import IPythonConsole
 from spyder.utils.conda import get_list_conda_envs
-
+from spyder.utils.environ import (
+    get_user_env, set_user_env, amend_user_shell_init
+)
 
 # =============================================================================
 # ---- Constants
@@ -387,9 +389,15 @@ font.size: 9
     rc_file = str(tmp_path / 'matplotlibrc')
     with open(rc_file, 'w') as f:
         f.write(file_contents)
-    os.environ['MATPLOTLIBRC'] = rc_file
+
+    if os.name == "nt":
+        orig_env = get_user_env()
+
+    set_user_env({"MATPLOTLIBRC": rc_file})
 
     yield
 
-    os.environ.pop('MATPLOTLIBRC')
-    os.remove(rc_file)
+    if os.name == "nt":
+        set_user_env(orig_env)
+    else:
+        amend_user_shell_init(restore=True)

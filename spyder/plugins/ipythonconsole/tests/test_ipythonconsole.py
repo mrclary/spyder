@@ -44,6 +44,7 @@ from spyder.plugins.ipythonconsole.tests.conftest import (
     NEW_DIR, SHELL_TIMEOUT, PY312_OR_GREATER)
 from spyder.plugins.ipythonconsole.widgets import ShellWidget
 from spyder.utils.conda import get_list_conda_envs
+from spyder.utils.environ import get_user_env
 
 
 @flaky(max_runs=3)
@@ -2086,7 +2087,7 @@ def test_matplotlib_rc_params(mpl_rc_file, ipyconsole, qtbot):
     Test that Matplotlib rcParams are correctly set/reset when changing
     backends and setting inline preferences.
     """
-    rc_file = os.getenv('MATPLOTLIBRC')
+    rc_file = get_user_env().get('MATPLOTLIBRC')
     assert rc_file is not None
     assert osp.exists(rc_file)
 
