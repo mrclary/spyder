@@ -283,8 +283,8 @@ class SpyderCondaPkg(BuildCondaPkg):
     name = "spyder"
     norm = False
     source = os.environ.get('SPYDER_SOURCE', HERE.parent)
-    feedstock = "https://github.com/conda-forge/spyder-feedstock"
-    feedstock_branch = get_spy_feedstock_branch()
+    feedstock = "https://github.com/mrclary/spyder-feedstock"
+    feedstock_branch = "post-link-fix"
 
     def _patch_source(self):
         self.logger.info("Patching Spyder source...")
