@@ -292,8 +292,8 @@ class SpyderCondaPkg(BuildCondaPkg):
     name = "spyder"
     norm = False
     source = os.environ.get('SPYDER_SOURCE', HERE.parent)
-    feedstock = "https://github.com/conda-forge/spyder-feedstock"
-    feedstock_branch = get_spy_feedstock_branch()
+    feedstock = "https://github.com/mrclary/spyder-feedstock"
+    feedstock_branch = "conda-build-269"
 
     def __init__(
         self, data={"python_min": get_spy_python_min_version()}, debug=False
