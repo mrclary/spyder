@@ -209,6 +209,7 @@ jobs:
             --channel-priority=flexible
             python=${{ matrix.python-version }}
             nsis>=3.08=*_log_*
+            mamba<2.10.0
           cache-downloads: true
           cache-environment: true
 
